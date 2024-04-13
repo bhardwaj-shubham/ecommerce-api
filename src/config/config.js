@@ -1,5 +1,6 @@
 const _config = {
   HOST: process.env.HOST,
+  CORS_ORIGIN: process.env.CORS_ORIGIN,
   USER: process.env.DB_USER,
   PASSWORD: process.env.DB_PASSWORD,
   DB: process.env.DB_NAME,
@@ -22,7 +23,7 @@ export const config = {
     const value = _config[key];
     if (!value) {
       console.error("Please give correct environment variable.");
-      process.exit();
+      process.exit(1);
     }
     return value;
   },

@@ -10,6 +10,7 @@ const sequelize = new Sequelize(
     dialect: config.get("dialect"),
     port: config.get("port"),
     pool: config.get("pool"),
+    logging: false,
   }
 );
 

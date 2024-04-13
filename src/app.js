@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import "dotenv/config";
+import { config } from "../src/config/config.js";
 
 const app = express();
 
@@ -9,7 +10,7 @@ const PORT = process.env.PORT || 4000;
 
 app.use(
   cors({
-    origin: "http://localhost:${PORT}",
+    origin: config.get("CORS_ORIGIN"),
     credentials: true,
   })
 );

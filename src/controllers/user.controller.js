@@ -20,11 +20,6 @@ const generateAccessAndRefreshToken = async (userId) => {
 
 const signupUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
-  console.log(req.body);
-
-  // if ([name, email, password].some((field) => field?.trim() === "")) {
-  //   throw new ApiError(400, "Please provide all required fields.");
-  // }
 
   if (!name || !email || !password) {
     throw new ApiError(400, "Please provide all required fields.");
@@ -47,8 +42,9 @@ const signupUser = asyncHandler(async (req, res) => {
   });
 
   const createdUser = await User.findByPk(user.id, {
-    password: false,
-    refreshToken: false,
+    attributes: {
+      exclude: ["password", "refreshToken"],
+    },
   });
 
   if (!createdUser) {
@@ -62,6 +58,7 @@ const signupUser = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  // console.log(email, password);
 
   if (!email || !password) {
     throw new ApiError(400, "Please provide email and password.");
@@ -71,6 +68,7 @@ const loginUser = asyncHandler(async (req, res) => {
     where: {
       email,
     },
+    attributes: ["id", "email", "password"],
   });
 
   if (!user) {
@@ -78,6 +76,7 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   const isPasswordValid = await user.validPassword(password);
+  // console.log(isPasswordValid);
 
   if (!isPasswordValid) {
     throw new ApiError(401, "Invalid email or password.");
@@ -88,8 +87,9 @@ const loginUser = asyncHandler(async (req, res) => {
   );
 
   const updatedUser = await User.findByPk(user.id, {
-    password: false,
-    refreshToken: false,
+    attributes: {
+      exclude: ["password", "refreshToken"],
+    },
   });
 
   const options = {
@@ -115,28 +115,36 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-  await User.update(
-    {
-      refreshToken: null,
-    },
-    {
-      where: {
-        id: req.user.id,
+  try {
+    const updatedUser = await User.update(
+      {
+        refreshToken: null,
       },
-      returning: true,
+      {
+        where: {
+          id: req.user.id,
+        },
+        returning: true,
+      }
+    );
+
+    if (updatedUser[0] === 0) {
+      throw new ApiError(500, "User not found.");
     }
-  );
 
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
 
-  return res
-    .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, {}, "User logged out successfully"));
+    return res
+      .status(200)
+      .clearCookie("accessToken", options)
+      .clearCookie("refreshToken", options)
+      .json(new ApiResponse(200, {}, "User logged out successfully"));
+  } catch (error) {
+    throw new ApiError(500, "Something went wrong while logging out user.");
+  }
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
@@ -145,4 +153,4 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, req.user, "User retrieved successfully"));
 });
 
-export { signupUser, loginUser, logoutUser };
+export { signupUser, loginUser, logoutUser, getCurrentUser };
