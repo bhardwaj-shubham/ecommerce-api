@@ -1,4 +1,4 @@
-import sequelize from "./index";
+import { sequelize } from "./index.js";
 import { DataTypes } from "sequelize";
 
 const Category = sequelize.define("Category", {

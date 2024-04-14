@@ -1,9 +1,10 @@
-import { User } from "../models/users.model.js";
+import { PurchasedHistory, User } from "../models/users.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { config } from "../config/config.js";
 import jwt from "jsonwebtoken";
+import { Product } from "../models/products.model.js";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -206,10 +207,105 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
+const changeUserPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+
+  if (!oldPassword || !newPassword) {
+    throw new ApiError(400, "Please provide old and new password.");
+  }
+
+  if (oldPassword === newPassword) {
+    throw new ApiError(
+      400,
+      "New password must be different from old password."
+    );
+  }
+
+  const user = await User.findByPk(req.user.id);
+  const isPasswordValid = await user.validPassword(oldPassword);
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid old password.");
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password changed successfully."));
+});
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { name, email } = req.body;
+
+  if (!name || !email) {
+    throw new ApiError(400, "Please provide name and email.");
+  }
+
+  const user = await User.update(
+    {
+      name,
+      email,
+    },
+    {
+      where: {
+        id: req.user.id,
+      },
+      returning: true,
+      attributes: {
+        exclude: ["password", "refreshToken"],
+      },
+    }
+  );
+
+  if (user[0] === 0) {
+    throw new ApiError(500, "User not found.");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user[1][0], "User updated successfully."));
+});
+
+const getUserPurchaseHistory = asyncHandler(async (req, res) => {
+  const userWithPurchaseHistory = await User.findOne({
+    where: {
+      id: req.user.id,
+    },
+    include: [
+      {
+        model: PurchasedHistory,
+        as: "purchaseHistories",
+      },
+    ],
+    attributes: {
+      exclude: ["password", "refreshToken"],
+    },
+  });
+
+  if (!userWithPurchaseHistory) {
+    throw new ApiError(500, "User not found.");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        userWithPurchaseHistory,
+        "User purchase history retrieved successfully."
+      )
+    );
+});
+
 export {
   signupUser,
   loginUser,
   logoutUser,
   getCurrentUser,
   refreshAccessToken,
+  changeUserPassword,
+  updateAccountDetails,
+  getUserPurchaseHistory,
 };

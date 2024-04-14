@@ -4,25 +4,26 @@ import jwt from "jsonwebtoken";
 import { sequelize } from "./index.js";
 import { config } from "../config/config.js";
 
-const User = sequelize.define(
-  "User",
+const Sellers = sequelize.define(
+  "Seller",
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
+      allowNull: false,
       autoIncrement: true,
     },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        notEmpty: true,
+        isEmpty: true,
       },
     },
     email: {
       type: DataTypes.STRING,
-      allowNull: false,
       unique: true,
+      allowNull: false,
       validate: {
         isEmail: true,
       },
@@ -31,16 +32,37 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    refreshToken: {
+    phone: {
       type: DataTypes.STRING,
+      allowNull: false,
+    },
+    address: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    city: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    state: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    zip: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    country: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
   },
   {
     timestamps: true,
     hooks: {
-      beforeSave: async function (user) {
-        if (user.changed("password")) {
-          user.password = await bcrypt.hash(user.password, 10);
+      beforeSave: async function (seller) {
+        if (seller.changed("password")) {
+          seller.password = await bcrypt.hash(seller.password, 10);
         }
       },
     },
@@ -48,12 +70,12 @@ const User = sequelize.define(
 );
 
 // Validate Password
-User.prototype.validPassword = async function (password) {
+Sellers.prototype.validPassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
 // Generate Access Token
-User.prototype.generateAccessToken = function () {
+Sellers.prototype.generateAccessToken = function () {
   return jwt.sign(
     {
       id: this.id,
@@ -68,7 +90,7 @@ User.prototype.generateAccessToken = function () {
 };
 
 // Generate Refresh Token
-User.prototype.generateRefreshToken = function () {
+Sellers.prototype.generateRefreshToken = function () {
   return jwt.sign(
     {
       id: this.id,
@@ -80,28 +102,4 @@ User.prototype.generateRefreshToken = function () {
   );
 };
 
-// Define a separate table for purchasedHistory
-const PurchasedHistory = sequelize.define(
-  "PurchasedHistory",
-  {
-    userId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    productId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-  },
-  {
-    timestamps: true,
-  }
-);
-
-User.hasMany(PurchasedHistory, {
-  foreignKey: "userId",
-  as: "purchaseHistories",
-});
-PurchasedHistory.belongsTo(User, { foreignKey: "userId", as: "user" });
-
-export { User, PurchasedHistory };
+export { Sellers };
