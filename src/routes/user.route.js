@@ -4,21 +4,18 @@ import {
   loginUser,
   logoutUser,
   getCurrentUser,
+  refreshAccessToken,
 } from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
-
-// router.post("/signup", signupUser);
-// router.post("/login", loginUser);
-// router.post("/logout", logoutUser);
-// router.get("/", getCurrentUser);
 
 router.route("/signup").post(signupUser);
 router.route("/login").post(loginUser);
 
 // should be protected - used middleware
 router.route("/logout").post(verifyJWT, logoutUser);
-router.route("/").get(verifyJWT, getCurrentUser);
+router.route("/current-user").get(verifyJWT, getCurrentUser);
+router.route("/refresh-token").post(refreshAccessToken);
 
 export default router;
