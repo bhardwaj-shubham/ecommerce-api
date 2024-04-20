@@ -9,7 +9,7 @@ import {
   updateAccountDetails,
   getUserPurchaseHistory,
 } from "../controllers/user.controller.js";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { verifyJWT } from "../middlewares/authUser.middleware.js";
 
 const router = express.Router();
 
