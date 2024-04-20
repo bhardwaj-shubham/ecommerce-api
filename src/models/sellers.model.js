@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { sequelize } from "./index.js";
 import { config } from "../config/config.js";
 
-const Sellers = sequelize.define(
+const Seller = sequelize.define(
   "Seller",
   {
     id: {
@@ -70,12 +70,12 @@ const Sellers = sequelize.define(
 );
 
 // Validate Password
-Sellers.prototype.validPassword = async function (password) {
+Seller.prototype.validPassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
 // Generate Access Token
-Sellers.prototype.generateAccessToken = function () {
+Seller.prototype.generateAccessToken = function () {
   return jwt.sign(
     {
       id: this.id,
@@ -90,7 +90,7 @@ Sellers.prototype.generateAccessToken = function () {
 };
 
 // Generate Refresh Token
-Sellers.prototype.generateRefreshToken = function () {
+Seller.prototype.generateRefreshToken = function () {
   return jwt.sign(
     {
       id: this.id,
@@ -102,4 +102,4 @@ Sellers.prototype.generateRefreshToken = function () {
   );
 };
 
-export { Sellers };
+export { Seller };
