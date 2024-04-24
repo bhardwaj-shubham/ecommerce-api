@@ -17,7 +17,7 @@ const Seller = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        isEmpty: true,
+        notEmpty: true,
       },
     },
     email: {

@@ -20,9 +20,11 @@ app.use(cookieParser());
 
 import userRouter from "./routes/user.route.js";
 import productRouter from "./routes/product.route.js";
+import sellerRouter from "./routes/seller.route.js";
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/products", productRouter);
+app.use("/api/v1/sellers", sellerRouter);
 
 app.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);

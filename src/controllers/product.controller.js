@@ -61,6 +61,4 @@ const getProductById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, product, "Product fetched successfully."));
 });
 
-// test above controller fetch product with id
-
 export { getAllProducts, getProductById };
