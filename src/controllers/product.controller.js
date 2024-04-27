@@ -1,7 +1,6 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { config } from "../config/config.js";
 import { Product } from "../models/products.model.js";
 import { Op } from "sequelize";
 
@@ -61,4 +60,82 @@ const getProductById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, product, "Product fetched successfully."));
 });
 
-export { getAllProducts, getProductById };
+const addProduct = asyncHandler(async (req, res) => {
+  const { name, description, price, quantity, categoryName } = req.body;
+
+  if (
+    [name, description, price, quantity, categoryName].some((field) => !field)
+  ) {
+    throw new ApiError(401, "Please provide all required all fields.");
+  }
+
+  const doesProductExist = await Product.findOne({
+    where: {
+      name,
+    },
+  });
+
+  if (doesProductExist) {
+    throw new ApiError(409, "Product with name already exists.");
+  }
+
+  let productImageLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.productImage) &&
+    req.files.productImage.length > 0
+  ) {
+    productImageLocalPath = req.files.productImage[0].path;
+  }
+
+  if (!productImageLocalPath) {
+    throw new ApiError(400, "Product image file is required.");
+  }
+
+  const uploadedProductImage = await uploadOnCloudinary(productImageLocalPath);
+
+  const category = await Category.findOne({
+    where: {
+      name: categoryName,
+    },
+  });
+
+  if (!category) {
+    throw new ApiError(401, "Please provide correct category name.");
+  }
+
+  const product = await Product.create({
+    name,
+    description,
+    price,
+    quantity,
+    image: uploadedProductImage?.url || "",
+    categoryId: category.id,
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, product, "Product added successfully."));
+});
+
+const getSellersAllProducts = asyncHandler(async (req, res) => {
+  const seller = req.seller;
+
+  const allProducts = await Product.findAll({
+    where: {
+      seller: seller.id,
+    },
+  });
+
+  if (!allProducts || allProducts.length === 0) {
+    throw new ApiError(401, "You don't have any products");
+  }
+
+  return res
+    .json(200)
+    .json(
+      new ApiResponse(200, allProducts, "All products fetched successfully")
+    );
+});
+
+export { getAllProducts, getProductById, addProduct, getSellersAllProducts };

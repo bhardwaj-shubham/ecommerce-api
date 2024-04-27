@@ -25,6 +25,7 @@ const Product = sequelize.define(
     quantity: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
+      allowNull: true,
     },
     image: {
       type: DataTypes.STRING,
@@ -35,6 +36,14 @@ const Product = sequelize.define(
       allowNull: false,
       references: {
         model: "Categories",
+        key: "id",
+      },
+    },
+    seller: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "Sellers",
         key: "id",
       },
     },

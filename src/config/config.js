@@ -1,4 +1,7 @@
+import "dotenv/config";
+
 const _config = {
+  PORT: process.env.PORT,
   HOST: process.env.HOST,
   CORS_ORIGIN: process.env.CORS_ORIGIN,
   USER: process.env.DB_USER,

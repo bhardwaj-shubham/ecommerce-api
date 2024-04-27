@@ -56,6 +56,9 @@ const Seller = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    refreshToken: {
+      type: DataTypes.STRING
+    }
   },
   {
     timestamps: true,
