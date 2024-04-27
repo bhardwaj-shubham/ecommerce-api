@@ -3,6 +3,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Product } from "../models/products.model.js";
 import { Op } from "sequelize";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { Category } from "../models/categories.model.js";
 
 const getAllProducts = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType } = req.query;
@@ -111,6 +113,7 @@ const addProduct = asyncHandler(async (req, res) => {
     quantity,
     image: uploadedProductImage?.url || "",
     categoryId: category.id,
+    seller: req.seller.id,
   });
 
   return res
@@ -118,24 +121,4 @@ const addProduct = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, product, "Product added successfully."));
 });
 
-const getSellersAllProducts = asyncHandler(async (req, res) => {
-  const seller = req.seller;
-
-  const allProducts = await Product.findAll({
-    where: {
-      seller: seller.id,
-    },
-  });
-
-  if (!allProducts || allProducts.length === 0) {
-    throw new ApiError(401, "You don't have any products");
-  }
-
-  return res
-    .json(200)
-    .json(
-      new ApiResponse(200, allProducts, "All products fetched successfully")
-    );
-});
-
-export { getAllProducts, getProductById, addProduct, getSellersAllProducts };
+export { getAllProducts, getProductById, addProduct };
