@@ -5,6 +5,7 @@ import { Product } from "../models/products.model.js";
 import { Op } from "sequelize";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Category } from "../models/categories.model.js";
+import { Review } from "../models/reviews.model.js";
 
 const getAllProducts = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType } = req.query;
@@ -47,19 +48,40 @@ const getAllProducts = asyncHandler(async (req, res) => {
 const getProductById = asyncHandler(async (req, res) => {
   const { productId } = req.params;
 
-  if (!productId) {
-    throw new ApiError(404, "Please provide product id.");
+  try {
+    if (!productId) {
+      throw new ApiError(404, "Please provide product id.");
+    }
+
+    let product = await Product.findByPk(productId);
+
+    if (!product) {
+      throw new ApiError(
+        404,
+        `Could not find any product with id ${productId}`
+      );
+    }
+
+    const reviews = await Review.findAll({
+      where: {
+        productId,
+      },
+    });
+
+    // add reviews to product object
+    product = product.toJSON();
+    product.reviews = reviews;
+
+    // calculate average rating
+    const totalRating = reviews.reduce((acc, review) => acc + review.rating, 0);
+    product.averageRating = totalRating / reviews.length;
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, product, "Product fetched successfully."));
+  } catch (error) {
+    throw new ApiError(500, error?.message || "Product not found.");
   }
-
-  const product = await Product.findByPk(productId);
-
-  if (!product) {
-    throw new ApiError(404, `Could not find any product with id ${productId}`);
-  }
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, product, "Product fetched successfully."));
 });
 
 const addProduct = asyncHandler(async (req, res) => {
@@ -189,4 +211,41 @@ const deleteProduct = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Product deleted successfully."));
 });
 
-export { getAllProducts, getProductById, addProduct, updateProduct, deleteProduct };
+const reviewProduct = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+  const { rating, comment } = req.body;
+
+  if (!productId) {
+    throw new ApiError(404, "Please provide product id.");
+  }
+
+  if (!rating || !comment) {
+    throw new ApiError(401, "Please provide rating and comment.");
+  }
+
+  const product = await Product.findByPk(productId);
+
+  if (!product) {
+    throw new ApiError(404, `Could not find any product with id ${productId}`);
+  }
+
+  const review = await Review.create({
+    productId,
+    userId: req.user.id,
+    rating,
+    comment,
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, review, "Review added successfully."));
+});
+
+export {
+  getAllProducts,
+  getProductById,
+  addProduct,
+  updateProduct,
+  deleteProduct,
+  reviewProduct,
+};

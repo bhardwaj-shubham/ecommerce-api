@@ -5,9 +5,11 @@ import {
   addProduct,
   updateProduct,
   deleteProduct,
+  reviewProduct,
 } from "../controllers/product.controller.js";
 import { verifySellerJWT } from "../middlewares/authSeller.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
+import { verifyJWT } from "../middlewares/authUser.middleware.js";
 
 const router = express.Router();
 
@@ -39,5 +41,7 @@ router
     updateProduct
   )
   .delete(verifySellerJWT, deleteProduct);
+
+router.route("/:productId/reviews").post(verifyJWT, reviewProduct);
 
 export default router;

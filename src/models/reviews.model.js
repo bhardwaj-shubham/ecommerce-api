@@ -14,7 +14,7 @@ const Review = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "Product",
+        model: "Products",
         key: "id",
       },
     },
@@ -22,7 +22,7 @@ const Review = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "User",
+        model: "Users",
         key: "id",
       },
     },
