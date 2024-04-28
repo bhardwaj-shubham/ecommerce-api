@@ -121,4 +121,72 @@ const addProduct = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, product, "Product added successfully."));
 });
 
-export { getAllProducts, getProductById, addProduct };
+const updateProduct = asyncHandler(async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { name, description, price, quantity } = req.body;
+
+    if (!productId) {
+      throw new ApiError(404, "Please provide product id.");
+    }
+
+    if ([name, description, price, quantity].some((field) => !field)) {
+      throw new ApiError(401, "Please provide all required all fields.");
+    }
+
+    const product = await Product.findByPk(productId);
+
+    if (!product) {
+      throw new ApiError(
+        404,
+        `Could not find any product with id ${productId}`
+      );
+    }
+
+    const productImageLocalPath = req.files.productImage[0].path;
+
+    const uploadedProductImage = await uploadOnCloudinary(
+      productImageLocalPath
+    );
+
+    product.name = name;
+    product.description = description;
+    product.price = price;
+    product.quantity = quantity;
+    product.image = uploadedProductImage?.url || "";
+
+    await product.save();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, product, "Product updated successfully."));
+  } catch (error) {
+    return res
+      .status(500)
+      .json(
+        new ApiError(500, error?.message || "Could not update the product.")
+      );
+  }
+});
+
+const deleteProduct = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+
+  if (!productId) {
+    throw new ApiError(404, "Please provide product id.");
+  }
+
+  const product = await Product.findByPk(productId);
+
+  if (!product) {
+    throw new ApiError(404, `Could not find any product with id ${productId}`);
+  }
+
+  await product.destroy();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Product deleted successfully."));
+});
+
+export { getAllProducts, getProductById, addProduct, updateProduct, deleteProduct };

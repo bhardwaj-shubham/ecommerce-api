@@ -3,6 +3,8 @@ import {
   getAllProducts,
   getProductById,
   addProduct,
+  updateProduct,
+  deleteProduct,
 } from "../controllers/product.controller.js";
 import { verifySellerJWT } from "../middlewares/authSeller.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -23,5 +25,19 @@ router.route("/add-product").post(
   ]),
   addProduct
 );
+
+router
+  .route("/:productId")
+  .put(
+    verifySellerJWT,
+    upload.fields([
+      {
+        name: "productImage",
+        maxCount: 1,
+      },
+    ]),
+    updateProduct
+  )
+  .delete(verifySellerJWT, deleteProduct);
 
 export default router;
