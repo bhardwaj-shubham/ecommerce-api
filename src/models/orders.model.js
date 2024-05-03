@@ -1,5 +1,5 @@
 import { sequelize } from "./index.js";
-import { DataTypes } from "sequelize";
+import { DataTypes, Sequelize } from "sequelize";
 
 const Order = sequelize.define(
   "Order",
@@ -13,16 +13,15 @@ const Order = sequelize.define(
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      unique: true,
       references: {
-        model: "User",
+        model: "Users",
         key: "id",
       },
     },
     orderDate: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: DataTypes.NOW,
+      defaultValue: Sequelize.NOW,
     },
     status: {
       type: DataTypes.ENUM,

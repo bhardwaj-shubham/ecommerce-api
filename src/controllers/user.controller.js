@@ -5,6 +5,9 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { config } from "../config/config.js";
 import jwt from "jsonwebtoken";
 import { Product } from "../models/products.model.js";
+import { Order } from "../models/orders.model.js";
+import { OrderDetails } from "../models/orderDetails.model.js";
+import Stripe from "stripe";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -299,6 +302,85 @@ const getUserPurchaseHistory = asyncHandler(async (req, res) => {
     );
 });
 
+const buyProduct = asyncHandler(async (req, res) => {
+  const { productId, quantity, payment_method } = req.body;
+
+  if (!productId || !quantity || !payment_method) {
+    throw new ApiError(
+      400,
+      "Please provide product ID, quantity, and payment method."
+    );
+  }
+
+  const product = await Product.findByPk(productId);
+
+  if (!product) {
+    throw new ApiError(404, "Product not found.");
+  }
+
+  const totalAmount = product.price * quantity;
+
+  const order = await Order.create({
+    userId: req.user.id,
+    totalAmount,
+    status: "pending",
+  });
+
+  let paymentIntent;
+
+  try {
+    const stripe = new Stripe(config.get("STRIPE_SECRET_KEY"));
+
+    // Create a PaymentIntent with the order amount and currency
+    paymentIntent = await stripe.paymentIntents.create({
+      amount: totalAmount,
+      currency: "inr",
+      payment_method,
+      confirmation_method: "manual",
+      confirm: true,
+    });
+
+    if (!paymentIntent) {
+      throw new ApiError(500, "Payment failed.");
+    }
+  } catch (error) {
+    console.error("Error creating PaymentIntent:", error.message);
+    throw new ApiError(500, "Payment failed.");
+  }
+
+  order.status = "processing";
+  await order.save();
+
+  const orderDetails = await OrderDetails.create({
+    orderId: order.id,
+    productId,
+    quantity,
+    unitPrice: product.price,
+    subTotal: totalAmount,
+  });
+
+  const purchaseHistory = await PurchasedHistory.create({
+    userId: req.user.id,
+    orderId: order.id,
+    productId,
+    quantity,
+    totalAmount,
+  });
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        order,
+        orderDetails,
+        purchaseHistory,
+        paymentIntent,
+      },
+      "Product purchased successfully."
+    )
+  );
+});
+
 export {
   signupUser,
   loginUser,
@@ -308,4 +390,5 @@ export {
   changeUserPassword,
   updateAccountDetails,
   getUserPurchaseHistory,
+  buyProduct,
 };

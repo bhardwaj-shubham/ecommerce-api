@@ -10,6 +10,7 @@ import {
 import { verifySellerJWT } from "../middlewares/authSeller.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/authUser.middleware.js";
+import { buyProduct } from "../controllers/user.controller.js";
 
 const router = express.Router();
 
@@ -43,5 +44,7 @@ router
   .delete(verifySellerJWT, deleteProduct);
 
 router.route("/:productId/reviews").post(verifyJWT, reviewProduct);
+
+router.route("/buy").post(verifyJWT, buyProduct);
 
 export default router;
